@@ -130,27 +130,30 @@ extension FeedbackSelectionComponent: UICollectionViewDelegate, UICollectionView
   }
   
   func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-    let trait = traits[indexPath.item]
-    let traitName = trait.name
+    // 선택한 Trait의 인덱스 정보
+    let categoryIndex = parentViewController?.skill.categories.firstIndex(where: { $0.name == self.name }) ?? 0
+    let traitIndex = indexPath.item
     
-    // 선택된 개수가 2개를 초과하면 더 이상 선택하지 않도록 설정
-    if selectedTraitsTitles.count == maxSelectableTraits && !selectedTraitsTitles.contains(traitName) {
-      return
-    }
-    
-    // 선택된 항목을 추가하거나 제거하는 로직
-    if let index = selectedTraitsTitles.firstIndex(of: traitName) {
+    // 선택한 항목을 추가/삭제
+    let trait = traits[traitIndex]
+    if let index = selectedTraitsTitles.firstIndex(of: trait.name) {
       selectedTraitsTitles.remove(at: index)
+      parentViewController?.updateTraitSelection(categoryIndex: categoryIndex, traitIndex: traitIndex, increase: false)
+      
     } else {
-      selectedTraitsTitles.append(traitName)
+      if selectedTraitsTitles.count >= 2 {
+        return
+      }
+      selectedTraitsTitles.append(trait.name)
+      parentViewController?.updateTraitSelection(categoryIndex: categoryIndex, traitIndex: traitIndex, increase: true)
     }
     
-    // 셀의 선택 상태에 따라 UI를 업데이트
+    // UI 갱신
     collectionView.reloadItems(at: [indexPath])
     
-    // 푸터 라벨 업데이트
     updateFooterLabel()
     
+    // 완료 버튼 상태 업데이트
     parentViewController?.updateDoneButtonState()
   }
   

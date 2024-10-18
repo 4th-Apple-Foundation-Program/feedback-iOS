@@ -29,8 +29,8 @@ final class SessionManager: NSObject {
   var projectName: String?
   var isHost: Bool = false
   var receivedUserInfos: [UserInfo] = []
-  var receivedFeedbackDatas: [[Feedback]] = []
-  
+  var receivedFeedbackDatas: [SkillSet] = []
+  var resultData: SkillSet = SkillSet(categories: [communication, selfDevelopment, problemSolving, teamwork, leadership])
   var onPeersChanged: (() -> Void)?
   var onDataReceived: ((Data, MCPeerID) -> Void)?
   var onPushDataReceived: (() -> Void)?
@@ -191,9 +191,26 @@ extension SessionManager: MCSessionDelegate {
         }
         
       case "sendFeedback":
-        if let receivedFeedbackData = try? JSONDecoder().decode([Feedback].self, from: receivedMessageData.data) {
+        if let receivedFeedbackData = try? JSONDecoder().decode(SkillSet.self, from: receivedMessageData.data) {
           self.receivedFeedbackDatas.append(receivedFeedbackData)
-          print("\(receivedFeedbackData)를 수신")
+          
+          resultData = SkillSet(categories: [communication, selfDevelopment, problemSolving, teamwork, leadership])
+          
+          for feedbackData in receivedFeedbackDatas {
+            for (categoryIndex, category) in feedbackData.categories.enumerated() {
+              for (traitIndex, trait) in category.traits.enumerated() {
+                resultData.categories[categoryIndex].traits[traitIndex].count += trait.count
+              }
+            }
+          }
+          
+          for category in resultData.categories {
+            print("카테고리: \(category.name)")
+            for trait in category.traits {
+              print("   트레잇: \(trait.name), 선택 횟수: \(trait.count)")
+            }
+          }
+//          print(resultData)
         }
         
       default:
@@ -202,7 +219,6 @@ extension SessionManager: MCSessionDelegate {
     }
   }
   
-
   
   func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {
   }

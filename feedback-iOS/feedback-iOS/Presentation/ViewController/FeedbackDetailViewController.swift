@@ -10,16 +10,10 @@ import UIKit
 import SnapKit
 import Then
 
-struct Feedback: Codable {
-  let categoryName: String
-  let selectedKeywords: [String]
-}
-
 class FeedbackDetailViewController: UIViewController {
   
-  let skill = SkillSet(categories: [communication, selfDevelopment, problemSolving, teamwork, leadership])
+  var skill = SkillSet(categories: [communication, selfDevelopment, problemSolving, teamwork, leadership])
   
-  var selectedFeedbacks: [Feedback] = []
   var selectedUserInfo: UserInfo?
   
   let scrollView = UIScrollView()
@@ -119,6 +113,14 @@ class FeedbackDetailViewController: UIViewController {
     }
   }
   
+  func updateTraitSelection(categoryIndex: Int, traitIndex: Int, increase: Bool) {
+    if increase {
+      skill.categories[categoryIndex].traits[traitIndex].count += 1
+    } else {
+      skill.categories[categoryIndex].traits[traitIndex].count -= 1
+    }
+  }
+  
   func updateDoneButtonState() {
     for subview in contentView.subviews {
       if let feedbackComponent = subview as? FeedbackSelectionComponent {
@@ -132,23 +134,14 @@ class FeedbackDetailViewController: UIViewController {
   }
   
   @objc private func doneButtonTapped() {
-    for subview in contentView.subviews {
-      if let feedbackComponent = subview as? FeedbackSelectionComponent {
-        let category = feedbackComponent.titleLabel.text ?? "Unknown Category"
-        let selectedKeywords = feedbackComponent.selectedTraitsTitles
-        let selectedFeedback = Feedback(
-          categoryName: category,
-          selectedKeywords: selectedKeywords
-        )
-        selectedFeedbacks.append(selectedFeedback)
-      }
-    }
+//    print(skill)
+    
     
     if let selectedUserInfo = selectedUserInfo {
       do {
         if let targetPeerID = SessionManager.shared.session.connectedPeers.first(where: { $0.displayName == selectedUserInfo.peerID }) {
           
-          let selectedFeedbacksData = try JSONEncoder().encode(selectedFeedbacks)
+          let selectedFeedbacksData = try JSONEncoder().encode(skill)
           
           SessionManager.shared.sendData(selectedFeedbacksData, message: "sendFeedback", to: [targetPeerID])
         } else {
